@@ -11,7 +11,7 @@ canvas.height = window.innerHeight * 2
 
 const strokeHistory = []
 
-const requestIdleCallback = window.requestIdleCallback || function (fn) { setTimeout(fn, 1) };
+const requestIdleCallback = window.requestIdleCallback || function (fn) { setTimeout(fn, 1) }
 
 /**
  * This function takes in an array of points and draws them onto the canvas.
@@ -24,18 +24,21 @@ function drawOnCanvas (stroke) {
   context.lineJoin = 'round'
 
   const l = stroke.length - 1
+
+  // context.strokeStyle = 'rgb(255,1,0)'
   if (stroke.length >= 3) {
     const xc = (stroke[l].x + stroke[l - 1].x) / 2
     const yc = (stroke[l].y + stroke[l - 1].y) / 2
     context.lineWidth = stroke[l - 1].lineWidth
     context.quadraticCurveTo(stroke[l - 1].x, stroke[l - 1].y, xc, yc)
+    context.strokeStyle = stroke[l].color
     context.stroke()
     context.beginPath()
     context.moveTo(xc, yc)
   } else {
-    const point = stroke[l];
+    const point = stroke[l]
     context.lineWidth = point.lineWidth
-    context.strokeStyle = point.color
+    // context.strokeStyle = point.color
     context.beginPath()
     context.moveTo(point.x, point.y)
     context.stroke()
@@ -55,7 +58,7 @@ function undoDraw () {
 
     context.beginPath()
 
-    let strokePath = [];
+    const strokePath = []
     stroke.map(function (point) {
       strokePath.push(point)
       drawOnCanvas(strokePath)
@@ -63,13 +66,13 @@ function undoDraw () {
   })
 }
 
-for (const ev of ["touchstart", "mousedown"]) {
+for (const ev of ['touchstart', 'mousedown']) {
   canvas.addEventListener(ev, function (e) {
-    let pressure = 0.1;
-    let x, y;
-    if (e.touches && e.touches[0] && typeof e.touches[0]["force"] !== "undefined") {
-      if (e.touches[0]["force"] > 0) {
-        pressure = e.touches[0]["force"]
+    let pressure = 0.1
+    let x, y
+    if (e.touches && e.touches[0] && typeof e.touches[0].force !== 'undefined') {
+      if (e.touches[0].force > 0) {
+        pressure = e.touches[0].force
       }
       x = e.touches[0].pageX * 2
       y = e.touches[0].pageY * 2
@@ -93,12 +96,18 @@ for (const ev of ['touchmove', 'mousemove']) {
   canvas.addEventListener(ev, function (e) {
     if (!isMousedown) return
     e.preventDefault()
-
     let pressure = 0.1
     let x, y
-    if (e.touches && e.touches[0] && typeof e.touches[0]["force"] !== "undefined") {
-      if (e.touches[0]["force"] > 0) {
-        pressure = e.touches[0]["force"]
+    let altitudeAngle = 0
+    let color = 'rgba(1,1,1,1)'
+    let touchType = 'direct'
+    if (e.touches && e.touches[0] && typeof e.touches[0].force !== 'undefined') {
+      if (e.touches[0].force > 0) {
+        touchType = e.touches[0].touchType
+        pressure = e.touches[0].force
+        altitudeAngle = e.touches[0].altitudeAngle
+        color = `rgba(${Math.cos(altitudeAngle) * 255}, 0, 0, 0.5)`
+        console.log('touch', e.touches)
       }
       x = e.touches[0].pageX * 2
       y = e.touches[0].pageY * 2
@@ -110,9 +119,13 @@ for (const ev of ['touchmove', 'mousemove']) {
 
     // smoothen line width
     lineWidth = (Math.log(pressure + 1) * 40 * 0.2 + lineWidth * 0.8)
-    points.push({ x, y, lineWidth })
+    if (touchType === 'direct') {
+      lineWidth = 60
+      color = 'rgba(255,255,,1)'
+    }
+    points.push({ x, y, lineWidth, color })
 
-    drawOnCanvas(points);
+    drawOnCanvas(points)
 
     requestIdleCallback(() => {
       $force.textContent = 'force = ' + pressure
@@ -120,13 +133,13 @@ for (const ev of ['touchmove', 'mousemove']) {
       const touch = e.touches ? e.touches[0] : null
       if (touch) {
         $touches.innerHTML = `
-          touchType = ${touch.touchType} ${touch.touchType === 'direct' ? '👆' : '✍️'} <br/>
-          radiusX = ${touch.radiusX} <br/>
-          radiusY = ${touch.radiusY} <br/>
-          rotationAngle = ${touch.rotationAngle} <br/>
-          altitudeAngle = ${touch.altitudeAngle} <br/>
-          azimuthAngle = ${touch.azimuthAngle} <br/>
-        `
+  touchType = ${touch.touchType} ${touch.touchType === 'direct' ? '👆' : '✍️'} <br />
+  radiusX = ${touch.radiusX} <br />
+  radiusY = ${touch.radiusY} <br />
+  rotationAngle = ${touch.rotationAngle} <br />
+  altitudeAngle = ${touch.altitudeAngle} <br />
+  azimuthAngle = ${touch.azimuthAngle} <br />
+  `
       }
     })
   })
@@ -134,12 +147,12 @@ for (const ev of ['touchmove', 'mousemove']) {
 
 for (const ev of ['touchend', 'touchleave', 'mouseup']) {
   canvas.addEventListener(ev, function (e) {
-    let pressure = 0.1;
-    let x, y;
+    let pressure = 0.1
+    let x, y
 
-    if (e.touches && e.touches[0] && typeof e.touches[0]["force"] !== "undefined") {
-      if (e.touches[0]["force"] > 0) {
-        pressure = e.touches[0]["force"]
+    if (e.touches && e.touches[0] && typeof e.touches[0].force !== 'undefined') {
+      if (e.touches[0].force > 0) {
+        pressure = e.touches[0].force
       }
       x = e.touches[0].pageX * 2
       y = e.touches[0].pageY * 2
@@ -151,7 +164,7 @@ for (const ev of ['touchend', 'touchleave', 'mouseup']) {
 
     isMousedown = false
 
-    requestIdleCallback(function () { strokeHistory.push([...points]); points = []})
+    requestIdleCallback(function () { strokeHistory.push([...points]); points = [] })
 
     lineWidth = 0
   })
