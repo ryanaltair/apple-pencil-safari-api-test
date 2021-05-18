@@ -121,7 +121,7 @@ for (const ev of ['touchmove', 'mousemove']) {
     lineWidth = (Math.log(pressure + 1) * 40 * 0.2 + lineWidth * 0.8)
     if (touchType === 'direct') {
       lineWidth = 60
-      color = 'rgba(255,255,,1)'
+      color = 'rgba(255,255,255,1)'
     }
     points.push({ x, y, lineWidth, color })
 
